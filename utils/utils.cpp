@@ -8,11 +8,15 @@
 #include <string>
 #include <vector>
 
-void* get_pawn(lua_State* L, int idx) {
+void* get_data(lua_State* L, const char* error, int idx) {
 	void*** userdata = (void***)lua_touserdata(L, idx);
-	luaL_argcheck(L, userdata != NULL, 1, "`pawn' expected");
+	luaL_argcheck(L, userdata != NULL, 1, error);
 	return userdata[0][2];
 }
+void* get_pawn(lua_State* L, int idx) {
+	return get_data(L, "`pawn' expected", idx);
+}
+
 int getpawnaddr(lua_State* L) {
 	void* pawn = get_pawn(L, 1);
 	lua_pushinteger(L, (int)pawn);
@@ -61,12 +65,30 @@ int get_max_health(lua_State* L) {
 	return 1;
 }
 
+void* offset(void* base, size_t delta) {
+	return (void*)((int)base + delta);
+}
+int get_tile_health(lua_State* L) {
+	void* board = get_data(L, "`board' expected", 1);
+	int x = luaL_checkint(L, 2);
+	int y = luaL_checkint(L, 3);
+	
+	void* row_vec = *(void**)offset(board, 0x4c);
+	void* column_arr = *(void**)offset(row_vec, 12 * x);
+	void* tile = offset(column_arr, 0x21f0 * y);
+	void* tile_health = offset(tile, 0x6c);
+
+	lua_pushinteger(L, *(int*)tile_health);
+	return 1;
+}
+
 static const struct luaL_Reg Utils[] = {
 { "GetWeaponName", getweaponname },
 { "GetPawnAddr", getpawnaddr },
 { "SetHealth", set_health},
 { "SetMaxHealth", set_max_health },
 { "GetMaxHealth", get_max_health },
+{ "GetTileHealth", get_tile_health },
 
 { NULL,           NULL } };
 extern "C" {
