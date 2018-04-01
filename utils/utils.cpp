@@ -8,10 +8,14 @@
 #include <string>
 #include <vector>
 
+void* get_pawn(lua_State* L, int idx) {
+	void*** userdata = (void***)lua_touserdata(L, idx);
+	luaL_argcheck(L, userdata != NULL, 1, "`pawn' expected");
+	return userdata[0][2];
+}
 int getpawnaddr(lua_State* L) {
-	int* outer = *(int**)lua_touserdata(L, 1);
-	int inner = outer[2];
-	lua_pushinteger(L, inner);
+	void* pawn = get_pawn(L, 1);
+	lua_pushinteger(L, (int)pawn);
 	return 1;
 }
 struct Weapon {
@@ -19,12 +23,9 @@ struct Weapon {
 	void* tail;
 };
 int getweaponname(lua_State* L) {
-	int*** userdata = (int***)lua_touserdata(L, 1);
-	size_t idx = luaL_checkint(L, 2);
-	luaL_argcheck(L, userdata != NULL, 1, "`pawn' expected");
+	void* weapon_vec_addr = (int*)get_pawn(L, 1)+1;
 
-	// we go userdata -> luabind data -> pawn struct
-	void* weapon_vec_addr = &userdata[0][2][1];
+	size_t idx = luaL_checkint(L, 2);
 
 	std::vector<Weapon>* weapon_vector = static_cast<std::vector<Weapon>*>(weapon_vec_addr);
 
@@ -39,8 +40,34 @@ int getweaponname(lua_State* L) {
 	lua_pushstring(L, name->c_str());
 	return 1;
 }
-static const struct luaL_Reg Utils[] = { { "GetWeaponName", getweaponname },
+int* get_pawn_data_at(void* pawn, int offset) {
+	return (int*)((int)pawn + 0x86c + offset);
+}
+int set_health(lua_State* L) {
+	int* pawn_health = get_pawn_data_at(get_pawn(L, 1), 4);
+	int new_val = luaL_checkint(L, 2);
+	*pawn_health = new_val;
+	return 0;
+}
+int set_max_health(lua_State* L) {
+	int* pawn_max_health = get_pawn_data_at(get_pawn(L, 1), 8);
+	int new_val = luaL_checkint(L, 2);
+	*pawn_max_health = new_val;
+	return 0;
+}
+int get_max_health(lua_State* L) {
+	int* pawn_max_health = get_pawn_data_at(get_pawn(L, 1), 8);
+	lua_pushinteger(L, *pawn_max_health);
+	return 1;
+}
+
+static const struct luaL_Reg Utils[] = {
+{ "GetWeaponName", getweaponname },
 { "GetPawnAddr", getpawnaddr },
+{ "SetHealth", set_health},
+{ "SetMaxHealth", set_max_health },
+{ "GetMaxHealth", get_max_health },
+
 { NULL,           NULL } };
 extern "C" {
 	int  __declspec(dllexport) luaopen_utils(lua_State* L) {
