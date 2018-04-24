@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include "lua/include/lua.hpp"
+#include "lua.hpp"
 
 #include <cstdint>
 #include <string>
