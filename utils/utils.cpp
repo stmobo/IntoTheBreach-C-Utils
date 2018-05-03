@@ -197,6 +197,30 @@ int set_pilot_name(lua_State* L) {
 	return 0;
 }
 
+int get_pilot_ability(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	lua_pushlstring(L, getPilotAbility(p), 16);
+
+	return 1;
+}
+
+int set_pilot_ability(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+	size_t ab_len = 0;
+	const char* new_ability = luaL_checklstring(L, 2, &ab_len);
+
+	if (ab_len > 16) {
+		return luaL_argerror(L, 2, "id must be <= 16 characters");
+	}
+
+	char* ab_ptr = getPilotAbility(p);
+	strncpy(ab_ptr, new_ability, 16);
+
+	return 0;
+}
+
+
 int get_pilot_id(lua_State* L) {
 	PilotData p = (PilotData)luaL_checkint(L, 1);
 
@@ -266,6 +290,9 @@ static const struct luaL_Reg Utils[] = {
 
 { "GetPilotName", get_pilot_name },
 { "SetPilotName", set_pilot_name },
+
+{ "GetPilotAbility", get_pilot_ability },
+{ "SetPilotAbility", set_pilot_ability },
 
 { "GetPilotPersonality", get_pilot_personality },
 { "SetPilotPersonality", set_pilot_personality },
