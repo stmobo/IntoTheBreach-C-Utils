@@ -30,6 +30,7 @@ int getpawnaddr(lua_State* L) {
 	lua_pushinteger(L, (int)pawn);
 	return 1;
 }
+
 typedef std::shared_ptr<void*> Weapon;
 
 std::vector<Weapon>* weapon_vec(void* pawn) {
@@ -49,6 +50,7 @@ Weapon* weapon_at(void* pawn, size_t idx) {
 		return &(*weapon_vector)[idx];
 	}
 }
+
 int getweaponname(lua_State* L) {
 	void* pawn = get_pawn(L, 1);
 	size_t idx = luaL_checkint(L, 2);
@@ -110,7 +112,7 @@ int get_tile_health(lua_State* L) {
 	void* board = get_data(L, "`board' expected", 1);
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
-	
+
 	void* row_vec = *(void**)offset(board, 0x4c);
 	void* column_arr = *(void**)offset(row_vec, 12 * x);
 	void* tile = offset(column_arr, 0x21f0 * y);
@@ -219,7 +221,6 @@ int set_pilot_ability(lua_State* L) {
 
 	return 0;
 }
-
 
 int get_pilot_id(lua_State* L) {
 	PilotData p = (PilotData)luaL_checkint(L, 1);
