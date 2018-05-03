@@ -9,6 +9,7 @@
 #include <vector>
 #include <memory>
 
+#include "pilot_data.h"
 
 void* offset(void* base, size_t delta) {
 	return (void*)((int)base + delta);
@@ -19,6 +20,7 @@ void* get_data(lua_State* L, const char* error, int idx) {
 	luaL_argcheck(L, userdata != NULL, 1, error);
 	return userdata[0][2];
 }
+
 void* get_pawn(lua_State* L, int idx) {
 	return get_data(L, "`pawn' expected", idx);
 }
@@ -35,6 +37,7 @@ std::vector<Weapon>* weapon_vec(void* pawn) {
 	std::vector<Weapon>* weapon_vector = static_cast<std::vector<Weapon>*>(weapon_vec_addr);
 	return weapon_vector;
 }
+
 Weapon* weapon_at(void* pawn, size_t idx) {
 	if (idx == 50) {
 		return (Weapon*)offset(pawn, 0x5c);
@@ -77,21 +80,25 @@ int replace_weapon(lua_State*L) {
 	weapons->pop_back();
 	return 0;
 }
+
 int* get_pawn_data_at(void* pawn, int offset) {
 	return (int*)((int)pawn + 0x86c + offset);
 }
+
 int set_health(lua_State* L) {
 	int* pawn_health = get_pawn_data_at(get_pawn(L, 1), 4);
 	int new_val = luaL_checkint(L, 2);
 	*pawn_health = new_val;
 	return 0;
 }
+
 int set_max_health(lua_State* L) {
 	int* pawn_max_health = get_pawn_data_at(get_pawn(L, 1), 8);
 	int new_val = luaL_checkint(L, 2);
 	*pawn_max_health = new_val;
 	return 0;
 }
+
 int get_max_health(lua_State* L) {
 	int* pawn_max_health = get_pawn_data_at(get_pawn(L, 1), 8);
 	lua_pushinteger(L, *pawn_max_health);
@@ -113,6 +120,130 @@ int get_tile_health(lua_State* L) {
 	return 1;
 }
 
+int get_pilot_data_ref(lua_State* L) {
+	void* pawn = get_pawn(L, 1);
+	PilotData p = getPilotData(pawn);
+
+	lua_pushinteger(L, (int)p);
+	return 1;
+}
+
+int get_pilot_exp(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	lua_pushinteger(L, getPilotEXP(p));
+
+	return 1;
+}
+
+int set_pilot_exp(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	setPilotEXP(p, luaL_checkint(L, 2));
+	return 0;
+}
+
+int get_pilot_levelup_exp(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	lua_pushinteger(L, getPilotLevelUpEXP(p));
+
+	return 1;
+}
+
+int set_pilot_levelup_exp(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	setPilotLevelUpEXP(p, luaL_checkint(L, 2));
+	return 0;
+}
+
+int get_pilot_level(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	lua_pushinteger(L, getPilotLevel(p));
+
+	return 1;
+}
+
+int set_pilot_level(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	setPilotLevel(p, luaL_checkint(L, 2));
+	return 0;
+}
+
+
+int get_pilot_name(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	lua_pushlstring(L, getPilotName(p), 16);
+
+	return 1;
+}
+
+int set_pilot_name(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+	size_t name_len = 0;
+	const char* new_name = luaL_checklstring(L, 2, &name_len);
+
+	if (name_len > 16) {
+		return luaL_argerror(L, 2, "name must be <= 16 characters");
+	}
+
+	char* name_ptr = getPilotName(p);
+	strncpy(name_ptr, new_name, 16);
+
+	return 0;
+}
+
+int get_pilot_id(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	lua_pushlstring(L, getPilotID(p), 16);
+
+	return 1;
+}
+
+int set_pilot_id(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+	size_t id_len = 0;
+	const char* new_id = luaL_checklstring(L, 2, &id_len);
+
+	if (id_len > 16) {
+		return luaL_argerror(L, 2, "id must be <= 16 characters");
+	}
+
+	char* id_ptr = getPilotID(p);
+	strncpy(id_ptr, new_id, 16);
+
+	return 0;
+}
+
+int get_pilot_personality(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+
+	lua_pushlstring(L, getPilotID(p), 16);
+
+	return 1;
+}
+
+int set_pilot_personality(lua_State* L) {
+	PilotData p = (PilotData)luaL_checkint(L, 1);
+	size_t pers_len = 0;
+	const char* new_pers = luaL_checklstring(L, 2, &pers_len);
+
+	if (pers_len > 16) {
+		return luaL_argerror(L, 2, "id must be <= 16 characters");
+	}
+
+	char* pers_ptr = getPilotPersonality(p);
+	strncpy(pers_ptr, new_pers, 16);
+
+	return 0;
+}
+
+
 static const struct luaL_Reg Utils[] = {
 { "GetWeaponName", getweaponname },
 { "GetPawnAddr", getpawnaddr },
@@ -121,7 +252,28 @@ static const struct luaL_Reg Utils[] = {
 { "GetMaxHealth", get_max_health },
 { "GetTileHealth", get_tile_health },
 { "ReplaceWeapon", replace_weapon },
+
+{ "GetPilotAddr", get_pilot_data_ref },
+
+{ "GetPilotEXP", get_pilot_exp },
+{ "SetPilotEXP", set_pilot_exp },
+
+{ "GetPilotLevelUpEXP", get_pilot_levelup_exp },
+{ "SetPilotLevelUpEXP", set_pilot_levelup_exp },
+
+{ "GetPilotLevel", get_pilot_level },
+{ "SetPilotLevel", set_pilot_level },
+
+{ "GetPilotName", get_pilot_name },
+{ "SetPilotName", set_pilot_name },
+
+{ "GetPilotPersonality", get_pilot_personality },
+{ "SetPilotPersonality", set_pilot_personality },
+
+{ "GetPilotID", get_pilot_id },
+{ "SetPilotID", set_pilot_id },
 { NULL,           NULL } };
+
 extern "C" {
 	int  __declspec(dllexport) luaopen_utils(lua_State* L) {
 		luaL_register(L, "test", Utils);
