@@ -120,6 +120,21 @@ int get_tile_health(lua_State* L) {
 	return 1;
 }
 
+int set_tile_health(lua_State* L) {
+	void* board = get_data(L, "`board' expected", 1);
+	int x = luaL_checkint(L, 2);
+	int y = luaL_checkint(L, 3);
+	int health = luaL_checkint(L, 4);
+
+	void* row_vec = *(void**)offset(board, 0x4c);
+	void* column_arr = *(void**)offset(row_vec, 12 * x);
+	void* tile = offset(column_arr, 0x21f0 * y);
+	void* tile_health = offset(tile, 0x6c);
+
+	*(int*)tile_health = health;
+	return 0;
+}
+
 int get_pilot_data_ref(lua_State* L) {
 	void* pawn = get_pawn(L, 1);
 	PilotData p = getPilotData(pawn);
@@ -274,6 +289,7 @@ static const struct luaL_Reg Utils[] = {
 { "SetHealth", set_health},
 { "SetMaxHealth", set_max_health },
 { "GetMaxHealth", get_max_health },
+{ "SetTileHealth", set_tile_health },
 { "GetTileHealth", get_tile_health },
 { "ReplaceWeapon", replace_weapon },
 
